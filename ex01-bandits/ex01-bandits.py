@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-
+# set parameters
+epsilon = 0.1
+    
 class GaussianBandit:
     def __init__(self):
         self._arm_means = np.random.uniform(0., 1., 10)  # Sample some means
@@ -22,26 +24,54 @@ class GaussianBandit:
 
 
 def greedy(bandit, timesteps):
+    # init variables (rewards, n_plays, Q) by playing each arm once
     rewards = np.zeros(bandit.n_arms)
     n_plays = np.zeros(bandit.n_arms)
     Q = np.zeros(bandit.n_arms)
     possible_arms = range(bandit.n_arms)
-
-    # TODO: init variables (rewards, n_plays, Q) by playing each arm once
+    
+    for arm in possible_arms:
+        rewards[arm] = bandit.play_arm(arm)
+        n_plays[arm]+=1
+    
+    Q = rewards/n_plays
 
     # Main loop
     while bandit.total_played < timesteps:
-        # This example shows how to play a random arm:
-        a = random.choice(possible_arms)
-        reward_for_a = bandit.play_arm(a)
-        # TODO: instead do greedy action selection
-        # TODO: update the variables (rewards, n_plays, Q) for the selected arm
-
+        
+        x = np.argmax(Q)
+        reward_for_a = bandit.play_arm(x)
+        rewards[x]+=reward_for_a
+        n_plays[x]+=1
+        Q[x]=rewards[x]/n_plays[x]
+        
 
 def epsilon_greedy(bandit, timesteps):
-    # TODO: epsilon greedy action selection (you can copy your code for greedy as a starting point)
+    # init variables 
+    rewards = np.zeros(bandit.n_arms)
+    n_plays = np.zeros(bandit.n_arms)
+    Q = np.zeros(bandit.n_arms)
+    possible_arms = range(bandit.n_arms)
+    
+    for arm in possible_arms:
+        rewards[arm] = bandit.play_arm(arm)
+        n_plays[arm]+=1
+    
+    Q = rewards/n_plays
+    
     while bandit.total_played < timesteps:
-        reward_for_a = bandit.play_arm(0)  # Just play arm 0 as placeholder
+        
+        if np.random.uniform(0,1) <= epsilon:
+            x = random.choice(possible_arms)
+            #x = np.argmax(Q)
+        else:
+            x = np.argmax(Q)
+        
+        reward_for_a = bandit.play_arm(x)
+        rewards[x]+=reward_for_a
+        n_plays[x]+=1
+        Q[x]=rewards[x]/n_plays[x]
+            
 
 
 def main():
