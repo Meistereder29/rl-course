@@ -30,6 +30,7 @@ def greedy(bandit, timesteps):
     Q = np.zeros(bandit.n_arms)
     possible_arms = range(bandit.n_arms)
     
+    #play every arm once and calculate initial Q-values
     for arm in possible_arms:
         rewards[arm] = bandit.play_arm(arm)
         n_plays[arm]+=1
@@ -53,18 +54,21 @@ def epsilon_greedy(bandit, timesteps):
     Q = np.zeros(bandit.n_arms)
     possible_arms = range(bandit.n_arms)
     
+    #play every arm once and calculate initial Q-values
     for arm in possible_arms:
         rewards[arm] = bandit.play_arm(arm)
         n_plays[arm]+=1
     
     Q = rewards/n_plays
     
+    #main loop
     while bandit.total_played < timesteps:
         
         if np.random.uniform(0,1) <= epsilon:
+            # exploration-step
             x = random.choice(possible_arms)
-            #x = np.argmax(Q)
         else:
+            # exploitation-step
             x = np.argmax(Q)
         
         reward_for_a = bandit.play_arm(x)
@@ -75,7 +79,7 @@ def epsilon_greedy(bandit, timesteps):
 
 
 def main():
-    n_episodes = 500  # TODO: set to 10000 to decrease noise in plot
+    n_episodes = 10000  # TODO: set to 10000 to decrease noise in plot
     n_timesteps = 1000
     rewards_greedy = np.zeros(n_timesteps)
     rewards_egreedy = np.zeros(n_timesteps)
@@ -101,7 +105,7 @@ def main():
     plt.legend()
     plt.xlabel("Timesteps")
     plt.ylabel("Reward")
-    plt.savefig('bandit_strategies.eps')
+    plt.savefig('bandit_strategies.pdf')
     plt.show()
 
 
