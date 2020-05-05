@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import itertools
 
 # Init environment
 # Lets use a smaller 3x3 custom map for faster computations
@@ -50,7 +51,9 @@ def value_policy(policy):
     P = trans_matrix_for_policy(policy)
     # TODO: calculate and return v
     # (P, r and gamma already given)
-    return None
+    I=np.eye(n_states)
+    v_pi= np.linalg.inv(I-gamma*P).dot(r)
+    return v_pi
 
 
 def bruteforce_policies():
@@ -60,6 +63,32 @@ def bruteforce_policies():
     policy = np.zeros(n_states, dtype=np.int)  # in the discrete case a policy is just an array with action = policy[state]
     optimalvalue = np.zeros(n_states)
     
+    terminal_states=terminals() # get terminal states 
+    n_terminal_states = len(terminal_states)
+    
+    all_policies = np.array(list(itertools.product(range(0,n_actions),repeat=n_states-n_terminal_states))) # cartesian product of all possible actions in non-terminal states
+    
+    for states in terminal_states: # inserting action 0 for all terminal states
+        all_policies = np.insert(all_policies, states, [0], axis=1) # append (0,0) to policies as actions of terminal states
+
+    # try all possible policies and 
+
+    for p in all_policies:
+        value_of_p = value_policy(p)
+        if np.sum(np.greater_equal(value_of_p,optimalvalue)) == n_states:
+            policy = p
+            optimalvalue = value_of_p
+            v_sum = np.sum(optimalvalue)
+    
+    
+    optimalpolicies.append(policy)
+    
+    # check for more optimal policies
+    for p in all_policies:
+        if np.sum(value_policy(policy)) == np.sum(value_policy(p)) and not np.array_equal(p,policy):
+            optimalpolicies.append(p)
+        
+            
     # TODO: implement code that tries all possible policies, calculate the values using def value_policy. Find the optimal values and the optimal policies to answer the exercise questions.
 
     print ("Optimal value function:")
@@ -92,7 +121,7 @@ def main():
 
 
     # This code can be used to "rollout" a policy in the environment:
-    """
+    
     print ("rollout policy:")
     maxiter = 100
     state = env.reset()
@@ -102,7 +131,7 @@ def main():
         state=new_state
         if done:
             print ("Finished episode")
-            break"""
+            break
 
 
 if __name__ == "__main__":
