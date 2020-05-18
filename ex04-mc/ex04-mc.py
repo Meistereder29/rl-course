@@ -13,10 +13,11 @@ def getValueFunction(rewardList):
     for x in range(0,2):
         for y in range(0,10):
             for z in range(0,10):
-                #if rewardList[x][y][z]:
-                avReturn = sum(rewardList[x][y][z])/len(rewardList[x][y][z])
-                stateValueFunction[x][y][z] = avReturn
-                #else:
+                if rewardList[x][y][z]:
+                    avReturn = sum(rewardList[x][y][z])/len(rewardList[x][y][z])
+                    stateValueFunction[x][y][z] = avReturn
+                else:
+                    stateValueFunction[x][y][z] = 0
     return stateValueFunction
                     
 
@@ -25,9 +26,8 @@ def main(episodes):
     env = gym.make('Blackjack-v0')
     
     # start monte carlo simulation
-    
-    
-    returnOfStates = []
+     
+    returnOfStates = [] # init list which stores the returns for every state
     for x in range(0,2):
         returnOfStates.append([])
         for y in range(0,10):
@@ -66,12 +66,35 @@ def main(episodes):
             #print("obs:", obs)
             #print("reward:", reward)
             #print("")
+        if (episodeCounter % 50000 == 0):
+            print(episodeCounter)
         episodeCounter+=1
-    print(returnOfStates)
+        
     valueFunction = getValueFunction(returnOfStates)
     print(valueFunction)
-        
     
-
+    # plotting results 
+    
+    fig = plt.figure(figsize=plt.figaspect(1.2),dpi=200)
+    x = np.arange(1,11,1)
+    y = np.arange(12,22,1)
+    x,y = np.meshgrid(x,y)
+    
+    ax = fig.add_subplot(2,1,1,projection='3d')
+    aceFalse = valueFunction[0]
+    ax.plot_wireframe(x,y,aceFalse)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    
+    ax = fig.add_subplot(2,1,2,projection='3d')
+    aceTrue = valueFunction[1]
+    ax.plot_wireframe(x,y,aceTrue)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    plt.savefig("prediction_figure.pdf")
+    
+    
 if __name__ == "__main__":
     main(n_episodes)
