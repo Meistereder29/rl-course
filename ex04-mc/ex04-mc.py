@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
 
-n_episodes = 10000
+n_episodes = 500000
 
 
 def getValueFunction(rewardList):
@@ -27,7 +27,7 @@ def main(episodes):
     
     # start monte carlo simulation
      
-    returnOfStates = [] # init list which stores the returns for every state
+    returnOfStates = [] # create a list which stores the returns for every state. Dimension is 2x10x10 
     for x in range(0,2):
         returnOfStates.append([])
         for y in range(0,10):
@@ -40,13 +40,12 @@ def main(episodes):
         obs = env.reset()  # obs is a tuple: (player_sum, dealer_card, useable_ace)
         done = False
         
-        ace = int(obs[2]) # save initial state
-        pSum = obs[0]
-        dSum = obs[1]
+        # getting indices to access state-value function
+        index0 = int(obs[2]) # 0 or 1 for usable ace
+        index1 = obs[0]-12   # value of player card
+        index2 = obs[1]-1    # value of dealer card
         
         while not done:
-            # print("Episode: {} Index: [{}][{}][{}] Values: {} {} {}".format(episodeCounter,ace,pSum-12,dSum-1,obs[2],obs[0],obs[1])) 
-            #print("observation:", obs)
             
             if obs[0] >= 20:
                 #print("stick")
@@ -55,22 +54,19 @@ def main(episodes):
                 #print("hit")
                 obs, reward, done, _ = env.step(1)
             
-            if pSum >= 12:
-                returnOfStates[ace][pSum-12][dSum-1].append(reward)
-                # print("Episode: {} Index: [{}][{}][{}] Values: {} {} {}".format(episodeCounter,int(obs[2]),obs[0]-12,obs[1]-1,obs[2],obs[0],obs[1])) 
+            if index1 >= 0: # skip states where player_sum is below 12
+                returnOfStates[index0][index1][index2].append(reward)
             
-            ace = int(obs[2]) # save initial state
-            pSum = obs[0]
-            dSum = obs[1]
+            index0 = int(obs[2]) # update state
+            index1 = obs[0]-12
+            index2 = obs[1]-1
         
-            #print("obs:", obs)
-            #print("reward:", reward)
-            #print("")
+            
         if (episodeCounter % 50000 == 0):
-            print(episodeCounter)
+            print(episodeCounter) # visualize simulation progress
         episodeCounter+=1
         
-    valueFunction = getValueFunction(returnOfStates)
+    valueFunction = getValueFunction(returnOfStates) # calculate value function from return list
     print(valueFunction)
     
     # plotting results 
