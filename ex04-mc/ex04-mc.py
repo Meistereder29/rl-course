@@ -39,8 +39,8 @@ def main(episodes, policy="optimal"):
                 for a in range(0,2):
                     returnOfStates[x][y][z].append([])
     
-    qFunction = np.ones([2,10,10,2])
-    strategy = np.ones((2,10,10),dtype=int)
+    qFunction = np.zeros([2,10,10,2])
+    strategy = np.random.choice([0,1],size=(2,10,10))
     
     episodeCounter = 0
     startTime = time.time()
@@ -70,13 +70,22 @@ def main(episodes, policy="optimal"):
                 
             if index1 >= 0: # skip states where player_sum is below 1
                 returnOfStates[index0][index1][index2][action].append(reward)
-                if episodeCounter:
-                    qFunction[index0][index1][index2][action] = sum(returnOfStates[index0][index1][index2][action])/len(returnOfStates[index0][index1][index2][action])
-                    strategy[index0][index1][index2] = np.argmax(qFunction[index0][index1][index2])            
+                #if episodeCounter:
+                #    qFunction[index0][index1][index2][action] = sum(returnOfStates[index0][index1][index2][action])/len(returnOfStates[index0][index1][index2][action])
+                #    strategy[index0][index1][index2] = np.argmax(qFunction[index0][index1][index2])            
+                stateList.append((index0,index1,index2,action))
             index0 = int(obs[2]) # update state
             index1 = obs[0]-12
             index2 = obs[1]-1
         
+        for state in stateList:
+            index0 = state[0]
+            index1 = state[1]
+            index2 = state[2]
+            action = state[3]
+            #returnOfStates[index0][index1][index2][action].append(reward)
+            qFunction[index0][index1][index2][action] = sum(returnOfStates[index0][index1][index2][action])/len(returnOfStates[index0][index1][index2][action])
+            strategy[index0][index1][index2] = np.argmax(qFunction[index0][index1][index2])
             
         if (episodeCounter % 50000 == 0):
             print("Episode: {}".format(episodeCounter)) # visualize simulation progress
@@ -86,8 +95,6 @@ def main(episodes, policy="optimal"):
     simTime = stopTime - startTime
     valueFunction = getValueFunction(returnOfStates) # calculate value function from return list
     print("Simulation of {} episodes took {} seconds".format(n_episodes,simTime))
-    #print(qFunction[1])
-    #print(valueFunction)
     print(strategy)
     
     # plotting results 

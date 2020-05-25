@@ -18,38 +18,40 @@ n_actions = env.action_space.n
 
 def value_iteration():
     V_states = np.zeros(n_states)  # init values as zero
+    policy = np.zeros(n_states)
     theta = 1e-8
     gamma = 0.8
     # TODO: implement the value iteration algorithm and return the policy
     # Hint: env.P[state][action] gives you tuples (p, n_state, r, is_terminal), which tell you the probability p that you end up in the next state n_state and receive reward r
-    delta = 0
+    steps = 0
     
-    while True:
-        
-        for s in range(n_states):
+    while True: #outer Loop
+        delta = 0.0
+        for s in range(16): # iterate over states
             v = V_states[s]
-            V_a = np.zeros(n_actions) 
-            for a in range(n_actions):
-                transition_matrix = np.array(env.P[s][a])
+            V_action = np.zeros(n_actions) # action value function
+            
+            for a in range(4): # iterate over actions
+                transition_matrix = np.array(env.P[s][a]) # extract vectors for p, n_state and r from environment 
                 p_vector = transition_matrix[:,0]
-                nstate_vector = transition_matrix[:,1]
+                nstate_vector = transition_matrix[:,1].astype(int)
                 r_vector = transition_matrix[:,2]
                 
-                V_a[a] = 0
-                for i in range(0,3):
+                for i in range(0,len(nstate_vector)):
                     index = nstate_vector[i]
-                    V_a[a]+=p_vector[i] * (r_vector[i]) # + gamma*V_states[index]) 
-                    # TODO: FIx that shit
-                                                               
-            a_max = np.argmax(V_a)
-            V_states[s] = V_a[a_max]
-            
-            delta = np.max(delta,np.abs(v - V_states[s]))
-    
+                    V_action[a]+=p_vector[i] * (r_vector[i] + gamma*V_states[index]) 
+                                                                 
+            action = np.argmax(V_action)
+            V_states[s] = V_action[action]
+            policy[s] = action
+            delta = np.maximum(delta,np.abs(v - V_states[s]))
+
+        steps +=1
         if (delta < theta):
-            policy = np.zeros(n_states)
-            for s in range(n_states):
-                policy[s] = np.argmax(V_states)
+            policy = policy.astype(int)
+            print("Steps for optimal policy: {}".format(steps))
+            print("Value function: v={}".format(V_states))
+            break
     
     return policy
 def main():
