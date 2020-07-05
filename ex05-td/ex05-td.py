@@ -4,6 +4,10 @@ from itertools import product
 import matplotlib.pyplot as plt
 
 
+epsilon_sarsa = 0.1
+epsilon_q = 0.1
+n_episodes = 20000
+
 def print_policy(Q, env):
     """ This is a helper function to print a nice policy from the Q function"""
     moves = [u'←', u'↓',u'→', u'↑']
@@ -85,33 +89,70 @@ def plot_Q(Q, env):
     plt.xticks([])
     plt.yticks([])
 
+def epsilonGreedy(Q, s, epsilon):
+    
+    if np.random.rand() < epsilon:
+            action = np.random.randint(env.action_space.n)
+    else:
+            action = np.argmax(Q[s,:])
+    return action
 
-def sarsa(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e4)):
+def sarsa(env, alpha=0.1, gamma=0.9, epsilon=1, num_ep=n_episodes):
     Q = np.zeros((env.observation_space.n,  env.action_space.n))
-
+    len_array = np.zeros(num_ep)
+    av_array = np.zeros(num_ep)
     # TODO: implement the sarsa algorithm
-
+    
     # This is some starting point performing random walks in the environment:
     for i in range(num_ep):
         s = env.reset()
         done = False
+        a = epsilonGreedy(Q,s,epsilon)
+        length = 0
         while not done:
-            a = np.random.randint(env.action_space.n)
             s_, r, done, _ = env.step(a)
+            a_ = epsilonGreedy(Q,s_,epsilon)
+            Q[s,a] = Q[s,a] + alpha * (r + gamma * Q[s_,a_] - Q[s,a])
+            s = s_
+            a = a_
+            length+=1
+        len_array[i]=length
+        av_array[i] = np.sum(len_array)/(i+1)
+        if epsilon > 0.1:
+            epsilon-=0.001
+    # plotting average episode length
+    fig = plt.figure()
+    x = np.arange(num_ep)
+    plt.plot(x,av_array)
+    plt.xlabel("Episodes")
+    plt.ylabel("Average episode length")
+    print(epsilon)
+    #plot_V(Q, env)
+    #print(av_array)
+    plt.show()
     return Q
 
 
-def qlearning(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e4)):
+def qlearning(env, alpha=0.1, gamma=0.9, epsilon=0.5, num_ep=n_episodes):
     Q = np.zeros((env.observation_space.n,  env.action_space.n))
     # TODO: implement the qlearning algorithm
+    for i in range(num_ep):
+        s = env.reset()
+        done = False
+        while not done:
+            a = epsilonGreedy(Q,s,epsilon)
+            s_, r, done, _ = env.step(a)
+            Q[s,a] = Q[s,a] + alpha * (r + gamma * np.max(Q[s_,:]) - Q[s,a])
+            s = s_    
     return Q
 
 
-env=gym.make('FrozenLake-v0')
-#env=gym.make('FrozenLake-v0', is_slippery=False)
+#env=gym.make('FrozenLake-v0')
+env=gym.make('FrozenLake-v0', is_slippery=False)
 #env=gym.make('FrozenLake-v0', map_name="8x8")
 
 print("Running sarsa...")
+
 Q = sarsa(env)
 plot_V(Q, env)
 plot_Q(Q, env)
