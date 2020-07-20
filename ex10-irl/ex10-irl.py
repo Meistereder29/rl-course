@@ -62,7 +62,7 @@ def value_iteration(env, rewards):
             V_states[s] = np.max(v_actions)  # use the max
             delta = max(delta, abs(v-V_states[s]))
 
-        if delta < theta:
+        if delta < theta: 
             break
 
     return policy
@@ -72,16 +72,84 @@ def value_iteration(env, rewards):
 
 def main():
     env = gym.make('FrozenLake-v0')
-    #env.render()
+    env.render()
     env.seed(0)
     np.random.seed(0)
     expertpolicy = [0, 3, 0, 3, 0, 0, 0, 0, 3, 1, 0, 0, 0, 2, 1, 0]
     trajs = generate_demonstrations(env, expertpolicy, 0.1, 20)  # list of trajectories
     print("one trajectory is a list with (state, action) pairs:")
     print (trajs[0])
-
-
-
+    
+    n_states = env.observation_space.n
+    n_actions = env.action_space.n
+    
+    # task a)
+    s_a_occucancies = np.zeros([env.observation_space.n,env.action_space.n])
+    transitions = 0
+    for demos in trajs:
+        for pairs in demos:
+            s_a_occucancies[pairs[0],pairs[1]] +=1
+            transitions += 1
+    print(s_a_occucancies)
+    policy = np.argmax(s_a_occucancies,axis=1)
+    print(policy)
+    
+    # task b)
+    
+    # calculate state visitation frequency
+    # state_expec = np.zeros(env.observation_space.n)
+    # features = np.zeros(env.observation_space.n)
+    
+    # for t in trajs:
+    #     for s in t:
+    #         state_expec[s[0]] += 1
+    # state_expec = state_expec / len(trajs)
+    
+    # one-hot encoding of features
+    features = np.identity(n_states)
+    
+               
+    # calculate transition matrix p(s'|s,a)
+    transition_matrix = np.zeros([n_states,n_actions,n_states]) # [s a s']
+    for s in range(n_states):
+        for a in range(n_actions):
+            transitions = env.P[s][a]
+            for p_trans,next_s,rew,done in transitions:
+                transition_matrix[s,a,next_s] += p_trans
+            transition_matrix[s,a,:]/=np.sum(transition_matrix[s,a,:])
+    
+    # calculate pi(a|s)
+    policy_probs = np.zeros([n_states,n_actions])
+    
+    for s,a in enumerate(expertpolicy):
+        policy_probs[s][a] = 1    
+    
+    
+    # calculate mu_t
+    mu_t = []
+    mu_sum = np.zeros([n_states])
+    mu = np.zeros([n_states])
+    mu[0] = 1
+    mu_t.append(mu)
+    
+    mu_sum += mu
+    
+    mu_t1 = np.zeros([n_states])
+    # for s in range(n_states):
+    #     mu_t1[s] = np.sum(transition_matrix[:,:,s] * mu.reshape(-1,1) * policy_probs)
+        
+    for i in range(100):
+        mu = mu_t[i]
+        mu_t1 = np.zeros([n_states])
+        for s in range(n_states):
+            mu_t1[s] = np.sum(transition_matrix[:,:,s] * mu.reshape(-1,1) * policy_probs)
+        mu_t.append(mu_t1)
+        mu_sum += mu_t1
+        
+    p_s_phi = mu_sum / 100
+    print(p_s_phi)
+    
+    debug = True
 
 if __name__ == "__main__":
     main()
